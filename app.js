@@ -33,12 +33,27 @@ io.on('connection', (socket) => {
 
 const fs = require('fs');
 
+
+function isUnique(word, words) {
+    for (let i = 0; i < words.length; i++) {
+        if (word === words[i]['infinitive'] )  {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+
 function generateWordsToLearn() {
     let data =   JSON.parse(fs.readFileSync('data.json'));
     let words = [];
     let i = 0;
-    while (i < 10) {
+    while (i < 15) {
         let rand = Math.floor(Math.random() * Object.keys(data).length);
+        while (!isUnique(data[rand]['infinitive'], words)) {
+            rand = Math.floor(Math.random() * Object.keys(data).length);
+        }
         if (rand != 0) {
             let temp = { ...data[rand] }
             let rand2 = Math.floor(Math.random() * 3);
@@ -55,6 +70,7 @@ function generateWordsToLearn() {
             words.push(temp);
             i++;
         }
+        
     }
             return words;
 }
