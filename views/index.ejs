@@ -1,0 +1,211 @@
+<div class="container">
+    <div class="secondContainer">
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Infinitive</th>
+            <th>Past</th>
+            <th>Past Participle</th>
+        </tr>
+    </thead>
+    <tbody>
+        <% let counter = 0; %>
+        <% for (let key in words) { %>
+            <tr id="<%= counter %>">
+                <% if (!words[key].infinitive) { %>
+                    <td><input class="value" id="Infinitive<%= counter %>" type="text" name="infinitive" value=""></td>
+                <% } else { %>
+                    <td><p  class="value" id="Infinitive<%= counter %>"><%= words[key].infinitive %></p></td>
+                <% } %>
+                <% if (!words[key].past) { %>
+                    <td><input  class="value" id="Past<%= counter %>" type="text" name="past" value=""></td>
+                <% } else { %>
+                    <td><p  class="value" id="Past<%= counter %>"><%= words[key].past %></p></td>
+                <% } %>
+                <% if (!words[key]['past participle']) { %>
+                    <td><input  class="value" id="Past_participle<%= counter %>" type="text" name="past_participle" value=""></td>
+                <% } else { %>
+                    <td><p  class="value" id="Past_participle<%= counter %>"><%= words[key]['past participle'] %></p></td>
+                <% } %>
+            </tr>
+            <% counter++; %>
+        <% } %>
+    </tbody>
+</table>
+
+    <a onclick="reroll()" class="button">Reroll</a>
+</div>
+</div>
+
+
+<script>
+
+
+    function reroll() {
+        fetch('/api/reroll', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(res => res.json()).then(data => {
+            if(data == true) {
+                window.location.reload();
+            }
+        }).catch(err => console.log(err));
+    }
+
+    function getValueFromInputId(id) {
+        return document.getElementById(id).value;
+    }
+
+    function getValueFromAId(id) {
+        return document.getElementById(id).innerHTML;
+    }
+
+    function isElementInputOrA(element) {
+        return element.tagName;
+    }
+
+    function getDataFromID(id, name) {
+        const element = document.getElementById(id);
+        if (isElementInputOrA(element) === 'INPUT') {
+            return getValueFromInputId(id);
+        } else if (isElementInputOrA(element) === 'P') {
+            return getValueFromAId(id);
+        } 
+        return null;
+    }
+
+    const inputs = document.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.value = '';
+        input.addEventListener('change', (e) => {
+            const id = e.target.parentNode.parentNode.id;
+            const name = e.target.name;
+            const value = e.target.value;
+            let data = {
+                infinitive: '',
+                past: '',
+                'past participle': ''
+            };
+            switch (name) {
+                case 'infinitive':
+                    data.infinitive = value;
+                    data.past = getDataFromID('Past' + id);
+                    data["past participle"] = getDataFromID('Past_participle' + id);
+                    break;
+                case 'past':
+                    data.past = value;
+                    data.infinitive = getDataFromID('Infinitive' + id);
+                    data["past participle"] = getDataFromID('Past_participle' + id);
+                    break;
+                case 'past_participle':
+                    data['past participle'] = value;
+                    data.infinitive = getDataFromID('Infinitive' + id);
+                    data.past = getDataFromID('Past' + id);
+                    break;
+            }
+            if(data.infinitive != '' && data.past != '' && data["past participle"] != '') {
+                fetch('/api/words', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    let validity = data.validity;
+                    if (validity.infinitive) {
+                        document.getElementById('Infinitive' + id).classList.add('valid');
+                    } else {
+                        document.getElementById('Infinitive' + id).classList.add('invalid');
+                    }
+                    if (validity.past) {
+                        document.getElementById('Past' + id).classList.add('valid');
+                    } else {
+                        document.getElementById('Past' + id).classList.add('invalid');
+                    }
+                    if (validity['past participle']) {
+                        document.getElementById('Past_participle' + id).classList.add('valid');
+                    } else {{
+                        document.getElementById('Past_participle' + id).classList.add('invalid');
+                    }}
+                })
+                .catch(err => console.log(err));
+            }
+            
+            
+        });
+    });
+
+</script>
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
+    * {
+        font-family: 'Roboto', sans-serif;
+    }
+    .value {
+        width: 100%;
+        height: 100%;
+        border-radius: 20px;
+        border: 1px solid #ffffff;
+        background-color: #668ad8;
+        color: white;
+        text-align: center;
+        font-size: medium;
+    }
+    .valid {
+        background-color: green;
+
+    }
+    .invalid {
+        background-color: red;
+    }
+    div.container {
+        width: 100%;
+        height: 100%;
+     
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .secondContainer {
+        display: flex;
+        margin: 0 5em;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    table {
+        margin: 2em 0;
+        box-shadow: 0 0 10px #668ad8;
+        background-color: #668ad8;
+        color: white;
+        padding: 1em;
+        border-radius: 10px;
+    }
+
+    input {
+        border-radius: 20px;
+        border: 1px solid #ffffff;
+        background-color: #668ad8;
+        color: white;
+        text-align: center;
+
+    }
+
+    a.button {
+        display: inline-block;
+        padding: 0.5em 1em;
+        text-decoration: none;
+        background: #668ad8;
+        color: #FFF;
+        border-bottom: solid 4px #627295;
+        border-radius: 3px;
+    }
+</style>
